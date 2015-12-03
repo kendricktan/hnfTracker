@@ -1,0 +1,7 @@
+sudo v4l2-ctl --set-ctrl exposure_auto=1 --device=/dev/video1
+sudo v4l2-ctl --set-ctrl brightness=50 --device=/dev/video1
+sudo v4l2-ctl --set-ctrl white_balance_temperature_auto=0 --device=/dev/video1
+sudo v4l2-ctl --set-ctrl white_balance_temperature=500 --device=/dev/video1
+sudo v4l2-ctl --set-ctrl saturation=150 --device=/dev/video1
+sudo v4l2-ctl --set-ctrl backlight_compensation=10 --device=/dev/video1
+

@@ -4,8 +4,10 @@ Dependencies:
 	> python3.4
 	> python3.4-numpy
 	> OpenCV 3.0.0
+	> v4l2 (to disable auto exposure on linux webcam)
 	
 # Getting-started
+
 
 # How it works
 

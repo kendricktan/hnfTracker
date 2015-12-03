@@ -1,19 +1,15 @@
-#!/usr/bin/python
-from core.hnfTracker import hnfTracker
 import cv2
+from core.hnfTracker import hnfTracker
+
+# Make webcam consistent
+# sudo v4l2-ctl --set-ctrl exposure_auto=1 --device=/dev/video1
 
 # Video capturing instance
 # -1 specifies it to get the first avaliable video instance
-video_capture = cv2.VideoCapture(-1)
-
-# Fixed video capture settings
-# allows more consistent tracking
-video_capture.set(cv2.cv.CV_CAP_PROP_BRIGHTNESS, 0.5)
-video_capture.set(cv2.cv.CV_CAP_PROP_SATURATION, 0.42)
-video_capture.set(cv2.cv.CV_CAP_PROP_CONTRAST, 0.5)
+video_capture = cv2.VideoCapture(1)
 
 # hnfTracker core instance
-hnftracker = hnfTracker(video_capture.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH), video_capture.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
+hnftracker = hnfTracker(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH), video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 while(True):
     # Gets frame from video input
