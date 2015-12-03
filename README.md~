@@ -10,9 +10,5 @@ Dependencies:
 # How it works
 
 ## Todo
-1. Find hand contours
-2. Identify finger points
-3. Support for multiple hands
-...
-n-1. Fix bugs
-n. Implement in C++
+1. Implement in C++
+2. Fix bugs
