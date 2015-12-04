@@ -40,7 +40,20 @@ while(True):
 
         # If we've captured it
         elif hnftracker.MEAN_VAL_SET is True:
-            ret, img_thresh = cv2.threshold(gray, hnftracker.get_mean(), 255, cv2.THRESH_BINARY)                
+            # Gets hand region of the image
+            im_hand_region = hnftracker.get_hand_region(gray)
+
+            # Optimizes image for thresholding/analyzing
+            im_hand_region = hnftracker.optimize_image(im_hand_region)
+
+            # Threshold
+            ret, img_thresh = cv2.threshold(im_hand_region, hnftracker.get_mean(), 255, cv2.THRESH_BINARY)
+
+            # im_thresh parameter is to obtain the contours and analyze it
+            # frame is merely for visual feedback (draw feedback onto the frame provided)
+            hnftracker.analyze_image(img_thresh, frame)
+
+            # Display
             cv2.imshow('hnfTracker v1.0 (thresholded)', img_thresh)
 
         # Display original image

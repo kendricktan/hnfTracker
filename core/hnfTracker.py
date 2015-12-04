@@ -43,6 +43,59 @@ class hnfTracker:
             for x in range(0, self.ROI_NO):
                 cv2.rectangle(im_input, self.ROI_COORD[x][0], self.ROI_COORD[x][1], (0, 255, 0), 1)
 
+    # Returns hand region of the image provided
+    def get_hand_region(self, im_input):
+        return im_input[self.HAND_REGION[0][1]:self.HAND_REGION[1][1], self.HAND_REGION[0][0]:self.HAND_REGION[1][0]]
+
+    # Smoothens and optimizes image for
+    # analyzing later
+    def optimize_image(self, im_input):
+        return cv2.bilateralFilter(im_input, 9, 75, 75)
+
+    # Analyzes image and draws the crucial
+    # points it found on the raw image
+    # that resembles a hand
+    def analyze_image(self, im_thresh, im_raw):
+        # Gets the contours
+        img_thresh, contours, hierarchy = cv2.findContours(im_thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        # Maxiumum area
+        # used to find largest contour
+        m_area = 0
+        m_x = None # Maximum x (largest contour)
+
+        # Find largest contour
+        for x in range(len(contours)):
+            cur_cont = contours[x]
+            cur_area = cv2.contourArea(cur_cont)
+
+            if(cur_area > m_area):
+                m_area = cur_area
+                m_x = x
+
+        try:
+            # Gets largest contour
+            max_cont = contours[m_x]
+
+            # Gets the convex hull from contour
+            hull = cv2.convexHull(max_cont, returnPoints = False)
+
+            # Gets the defects
+            defects = cv2.convexityDefects(max_cont, hull)
+
+            # Draw the current (largest) contour and its hull
+            # onto the input image
+            for i in range(defects.shape[0]):
+                s, e, f, d = defects[i, 0]
+                start = tuple(max_cont[s][0])
+                end = tuple(max_cont[e][0])
+                far = tuple(max_cont[f][0])
+                cv2.line(im_raw[self.HAND_REGION[0][1]:self.HAND_REGION[1][1], self.HAND_REGION[0][0]:self.HAND_REGION[1][0]],start,end,(0,255,0),2)
+                cv2.circle(im_raw[self.HAND_REGION[0][1]:self.HAND_REGION[1][1], self.HAND_REGION[0][0]:self.HAND_REGION[1][0]],far,5,(0,0,255),2)
+
+        except:
+            pass
+
 
     # Gets the mean value of the frames
     def extract_mean(self, im_input):
