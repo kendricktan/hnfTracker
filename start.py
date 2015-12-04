@@ -30,7 +30,7 @@ while(True):
     # Gets mean frame
     gray_mean = hnftracker.extract_mean(frame)
 
-    # Gets thresholdde image
+    # Gets thresholded image
     ret, img_thresh = cv2.threshold(gray, gray_mean, 255, cv2.THRESH_BINARY)
 
     # Display image
@@ -39,8 +39,11 @@ while(True):
         cv2.imshow('hnfTracker v1.0 (original)', frame)
 
     # Quit
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    key_pressed = cv2.waitKey(1)
+    if key_pressed & 0xFF == ord('q'):
         break
+    elif key_pressed & 0xFF == ord('c'): # captures color
+        hnftracker.set_mean(gray_mean)
 
 
 cv2.destroyAllWindows()
