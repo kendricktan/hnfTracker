@@ -1,12 +1,17 @@
 #!/usr/bin/python
 import cv2
+import math
 import numpy as np
 
 
 class hnfTracker:
     # Constructor
     def __init__(self, max_width, max_height):
-        
+        # Minimum distance between two points
+        # If they're within this threshold they'll
+        # be considered as one point
+        self.MIN_DIST_THRES = 10
+
         # Image dimension
         self.IM_MAX_WIDTH = max_width
         self.IM_MAX_HEIGHT = max_height
@@ -56,8 +61,11 @@ class hnfTracker:
     # points it found on the raw image
     # that resembles a hand
     def analyze_image(self, im_thresh, im_raw):
+        # Smooth binary image
+        im_thresh = cv2.bilateralFilter(im_thresh, 9, 75, 75)
+
         # Gets the contours
-        img_thresh, contours, hierarchy = cv2.findContours(im_thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        ret, contours, hierarchy = cv2.findContours(im_thresh.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         # Maxiumum area
         # used to find largest contour
@@ -85,13 +93,28 @@ class hnfTracker:
 
             # Draw the current (largest) contour and its hull
             # onto the input image
+            FINGER_TIPS = []
+
             for i in range(defects.shape[0]):
                 s, e, f, d = defects[i, 0]
                 start = tuple(max_cont[s][0])
                 end = tuple(max_cont[e][0])
                 far = tuple(max_cont[f][0])
                 cv2.line(im_raw[self.HAND_REGION[0][1]:self.HAND_REGION[1][1], self.HAND_REGION[0][0]:self.HAND_REGION[1][0]],start,end,(0,255,0),2)
-                cv2.circle(im_raw[self.HAND_REGION[0][1]:self.HAND_REGION[1][1], self.HAND_REGION[0][0]:self.HAND_REGION[1][0]],far,5,(0,0,255),2)
+                #cv2.circle(im_raw[self.HAND_REGION[0][1]:self.HAND_REGION[1][1], self.HAND_REGION[0][0]:self.HAND_REGION[1][0]],far,5,(0,0,255),2)
+
+                has_min_dist = True
+                for x in FINGER_TIPS:
+                    # If points are too close
+                    if (self.distance(far, x) < self.MIN_DIST_THRES):
+                        has_min_dist = False
+                        break
+
+                if has_min_dist:
+                    FINGER_TIPS.append(far)
+
+            for x in FINGER_TIPS:
+                cv2.circle(im_raw[self.HAND_REGION[0][1]:self.HAND_REGION[1][1], self.HAND_REGION[0][0]:self.HAND_REGION[1][0]],x,5,(0,0,255),2)
 
         except:
             pass
@@ -124,5 +147,9 @@ class hnfTracker:
     def reset(self):
         self.MEAN_VAL_SET = False
         self.IM_MEAN = None
+
+    # Gets distance between two points
+    def distance(self, p0, p1):
+        return math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
 
 
