@@ -27,23 +27,40 @@ while(True):
     # Draws Region of Interest (ROI) onto frame
     hnftracker.drawn_ROI(frame)
 
-    # Gets mean frame
-    gray_mean = hnftracker.extract_mean(frame)
-
-    # Gets thresholded image
-    ret, img_thresh = cv2.threshold(gray, gray_mean, 255, cv2.THRESH_BINARY)
-
     # Display image
     if (frame is not None):
-        cv2.imshow('hnfTracker v1.0 (thresholded)', img_thresh)
+        # If we haven't gotten the mean values
+        # for our hand/skin color
+        if hnftracker.MEAN_VAL_SET is False:
+            # Gets mean frame
+            gray_mean = hnftracker.extract_mean(frame)
+            # Gets thresholded image
+            ret, img_thresh = cv2.threshold(gray, gray_mean, 255, cv2.THRESH_BINARY)
+            cv2.imshow('hnfTracker v1.0 (thresholded)', img_thresh)
+
+        # If we've captured it
+        elif hnftracker.MEAN_VAL_SET is True:
+            ret, img_thresh = cv2.threshold(gray, hnftracker.get_mean(), 255, cv2.THRESH_BINARY)                
+            cv2.imshow('hnfTracker v1.0 (thresholded)', img_thresh)
+
+        # Display original image
         cv2.imshow('hnfTracker v1.0 (original)', frame)
 
-    # Quit
+    # Gets key presses
     key_pressed = cv2.waitKey(1)
+
+    # Quit
     if key_pressed & 0xFF == ord('q'):
         break
-    elif key_pressed & 0xFF == ord('c'): # captures color
+
+    # captures mean value
+    elif key_pressed & 0xFF == ord('c'):
         hnftracker.set_mean(gray_mean)
+
+    # Resets capture value
+    elif key_pressed & 0xFF == ord('r'):
+        hnftracker.reset()
+
 
 
 cv2.destroyAllWindows()
