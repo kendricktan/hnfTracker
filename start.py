@@ -6,7 +6,7 @@ from core.hnfTracker import hnfTracker
 
 # Video capturing instance
 # -1 specifies it to get the first avaliable video instance
-video_capture = cv2.VideoCapture(1)
+video_capture = cv2.VideoCapture(-1)
 
 # hnfTracker core instance
 hnftracker = hnfTracker(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH), video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
