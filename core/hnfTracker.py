@@ -7,10 +7,24 @@ import numpy as np
 class hnfTracker:
     # Constructor
     def __init__(self, max_width, max_height):
+        # Minimum distance between the center of the contour
+        # and the potential finger point
+        # to be considered as a finger point
+        # Calculated in percentage
+        # e.g. x% of the contour's widest distance or x% of the contour's tallest distance
+        self.MIN_CONT_CENTER_DIST_FINGER = 0.275
+        self.MIN_CONT_CENTER_DIST_THUMB = 0.5
+
+        # Minimum distance between the smallest value
+        # (the topmost finger point location)
+        # and the others to be considered a finger point
+        # Calculated in percentage
+        self.MIN_FINGER_LENGTH_VARIATION = 0.35
+
         # Minimum distance between two points
         # If they're within this threshold they'll
         # be considered as one point
-        self.MIN_DIST_THRES = 10
+        self.MIN_DIST_THRES_AS_POINT = 50
 
         # Image dimension
         self.IM_MAX_WIDTH = max_width
@@ -37,6 +51,10 @@ class hnfTracker:
         
         # Has the mean value been set
         self.MEAN_VAL_SET = False
+
+        # Font used
+        self.FONT = cv2.FONT_HERSHEY_SIMPLEX
+
 
     # Draws boxes around the interested regions
     def drawn_ROI(self, im_input):
@@ -83,7 +101,14 @@ class hnfTracker:
 
         try:
             # Gets largest contour
+            # (the maximized contour)
             max_cont = contours[m_x]
+
+            # Gets contour moments
+            # in order to get contour center points
+            moments = cv2.moments(max_cont)
+            cx = int(moments['m10']/moments['m00'])
+            cy = int(moments['m01']/moments['m00'])
 
             # Gets the convex hull from contour
             hull = cv2.convexHull(max_cont, returnPoints = False)
@@ -93,7 +118,9 @@ class hnfTracker:
 
             # Draw the current (largest) contour and its hull
             # onto the input image
-            FINGER_TIPS = []
+
+            # List to contain the filtered points
+            FILTERED_POINTS = []
 
             for i in range(defects.shape[0]):
                 s, e, f, d = defects[i, 0]
@@ -103,21 +130,71 @@ class hnfTracker:
                 cv2.line(im_raw[self.HAND_REGION[0][1]:self.HAND_REGION[1][1], self.HAND_REGION[0][0]:self.HAND_REGION[1][0]],start,end,(0,255,0),2)
                 #cv2.circle(im_raw[self.HAND_REGION[0][1]:self.HAND_REGION[1][1], self.HAND_REGION[0][0]:self.HAND_REGION[1][0]],far,5,(0,0,255),2)
 
+                # Adds current contour defect coordinate into the filtered list
+                # if it has a minimum of 20 euclidean distance between it and all of the
+                # points in the filtered list
                 has_min_dist = True
-                for x in FINGER_TIPS:
+
+                for x in FILTERED_POINTS:
                     # If points are too close
-                    if (self.distance(far, x) < self.MIN_DIST_THRES):
+                    if (self.distance(far, x) < self.MIN_DIST_THRES_AS_POINT):
                         has_min_dist = False
                         break
 
                 if has_min_dist:
-                    FINGER_TIPS.append(far)
+                    FILTERED_POINTS.append(far)
 
-            for x in FINGER_TIPS:
+            # List of recognized finger points
+            FINGER_POINTS = []
+
+            # Analyzes the filtered list. For a finger to be recognized
+            # it needs to have a threshold distance between itself and the center point of the
+            # Gets the top 4 smallest values (and get the corresponding 3, provided they're within the threshold)
+            # The smallest values corresponds to the finger tips
+            # as they're usually the topmost thing in the image
+            largest_x = 0
+            largest_y = 0
+            smallest_x = 99999
+            smallest_y = 99999
+            for cur_point in FILTERED_POINTS:
+                if (cur_point[0] < smallest_x):
+                    smallest_x = cur_point[0]
+                if (cur_point[0] > largest_x):
+                    largest_x = cur_point[0]
+                if (cur_point[1] < smallest_y):
+                    smallest_y = cur_point[1]
+                if (cur_point[1] > largest_y):
+                    largest_y = cur_point[1]
+
+            # Widest and tallest distance of our contour
+            x_Dist = largest_x - smallest_x
+            y_Dist = largest_y - smallest_y
+
+            # If they're within the threshold, recognize them as finger points
+            for cur_point in FILTERED_POINTS:
+                # Four fingers
+                if ((cur_point[1] > (smallest_y-(y_Dist*self.MIN_FINGER_LENGTH_VARIATION))) and (cur_point[1] < smallest_y+(y_Dist*self.MIN_FINGER_LENGTH_VARIATION))):
+                    # If they have the minimum threshold distance from the contour
+                    # center to their current distance
+                    # then they're considered a finger
+                    if ((cy-cur_point[1]) > (y_Dist*self.MIN_CONT_CENTER_DIST_FINGER)):
+                        FINGER_POINTS.append(cur_point)
+
+                # Thumb
+                if (cur_point[0] == smallest_x):
+                    # If they have the minimum threshold distance from the contour
+                    # center to their current distance
+                    # then they're considered a thumb
+                    if ((cx-cur_point[0]) > (x_Dist*self.MIN_CONT_CENTER_DIST_THUMB)):
+                        FINGER_POINTS.append(cur_point)
+
+            # Draws the finger points
+            for x in FINGER_POINTS:
                 cv2.circle(im_raw[self.HAND_REGION[0][1]:self.HAND_REGION[1][1], self.HAND_REGION[0][0]:self.HAND_REGION[1][0]],x,5,(0,0,255),2)
 
+
         except:
-            pass
+            print("something went wrong")
 
 
     # Gets the mean value of the frames
@@ -151,5 +228,6 @@ class hnfTracker:
     # Gets distance between two points
     def distance(self, p0, p1):
         return math.sqrt((p0[0] - p1[0])**2 + (p0[1] - p1[1])**2)
+
 
 

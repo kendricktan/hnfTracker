@@ -74,7 +74,9 @@ while(True):
     elif key_pressed & 0xFF == ord('r'):
         hnftracker.reset()
 
-
+    # Estimate number of fingers captures
+    elif key_pressed & 0xFF == ord('e'):
+        pass
 
 cv2.destroyAllWindows()
 video_capture.release()
